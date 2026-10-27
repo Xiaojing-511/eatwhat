@@ -1,0 +1,15 @@
+<root-portal>
+  <view wx:if="{{show}}" class="mask" bindtouchstart="onGuard" catchtap="onMask" catchtouchmove="noop">
+    <view class="panel" catchtap="noop">
+      <view class="title">{{title}}</view>
+      <slot></slot>
+      <view
+        wx:if="{{showConfirm}}"
+        class="confirm {{busy ? 'busy' : ''}}"
+        hover-class="{{busy ? '' : 'pressed'}}"
+        hover-stay-time="80"
+        bindtap="onConfirm"
+      >{{confirmText}}</view>
+    </view>
+  </view>
+</root-portal>

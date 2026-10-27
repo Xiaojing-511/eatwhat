@@ -1,0 +1,202 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav" style="height: {{navBarHeight}}px;">
+      <text class="nav-title">吃什么</text>
+    </view>
+    <view class="toolbar">
+      <view class="collection-trigger" bindtap="toggleMenu">
+        <text class="collection-name">{{currentName || '未选择'}}</text>
+        <view class="chevron {{menuOpen ? 'up' : ''}}"></view>
+      </view>
+      <view class="icon-hit" hover-class="is-pressed" hover-stay-time="80" bindtap="openCreate">
+        <view class="plus"></view>
+      </view>
+      <view class="toolbar-space"></view>
+      <view class="icon-hit" hover-class="is-pressed" hover-stay-time="80" bindtap="openAdd">
+        <view class="icon-pen"></view>
+      </view>
+    </view>
+    <text class="tagline">把喜欢的都记在这里，纠结时自有答案</text>
+  </view>
+
+  <view
+    wx:if="{{menuOpen}}"
+    class="menu-mask"
+    style="top: {{headerOffset}}px;"
+    bindtap="closeMenu"
+    catchtouchmove="noop"
+  >
+    <view class="menu-panel" catchtap="noop">
+      <scroll-view scroll-y show-scrollbar="{{false}}" style="height: {{menuHeight}}px;">
+        <view wx:if="{{!collections.length}}" class="menu-empty">还没有清单</view>
+        <view wx:for="{{collections}}" wx:key="_id" class="menu-row">
+          <view class="menu-main" data-id="{{item._id}}" bindtap="onSwitchCollection">
+            <text class="menu-name {{item._id === currentId ? 'current' : ''}}">{{item.name}}</text>
+            <view wx:if="{{item._id === currentId}}" class="check"></view>
+          </view>
+          <view class="menu-more" data-id="{{item._id}}" catchtap="onCollectionActions">···</view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty"></view>
+  <view wx:elif="{{itemsLoading}}" class="empty">加载中...</view>
+  <view wx:elif="{{loadError}}" class="empty" bindtap="loadAll">加载失败，轻触重试</view>
+  <view wx:elif="{{!currentId}}" class="empty">还没有清单，点加号创建一个</view>
+  <view wx:elif="{{!items.length}}" class="empty">还没有记录，点右侧记一条</view>
+  <swiper
+    wx:else
+    class="swiper"
+    current="{{pageIndex}}"
+    duration="280"
+    bindchange="onSwiperChange"
+  >
+    <swiper-item wx:for="{{pages}}" wx:key="key">
+      <view class="grid">
+        <view
+          wx:for="{{item.cards}}"
+          wx:for-item="card"
+          wx:key="_id"
+          class="card"
+          data-id="{{card._id}}"
+          bindtap="onTapItem"
+          bindlongpress="onLongPressItem"
+        >
+          <block wx:if="{{card.imageUrl}}">
+            <image class="card-image" src="{{card.imageUrl}}" mode="aspectFill" />
+            <view class="card-glass">
+              <text class="card-glass-text">{{card.name}}</text>
+            </view>
+          </block>
+          <view wx:else class="card-text-wrap">
+            <text class="card-text">{{card.name}}</text>
+          </view>
+        </view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <view class="pager">
+    <view
+      class="pager-btn {{pageIndex <= 0 || pages.length <= 1 ? 'disabled' : ''}}"
+      hover-class="{{pageIndex <= 0 || pages.length <= 1 ? '' : 'pressed'}}"
+      hover-stay-time="80"
+      bindtap="prevPage"
+    >
+      <view class="arrow left"></view>
+    </view>
+    <view
+      class="pager-btn {{pageIndex >= pages.length - 1 ? 'disabled' : ''}}"
+      hover-class="{{pageIndex >= pages.length - 1 ? '' : 'pressed'}}"
+      hover-stay-time="80"
+      bindtap="nextPage"
+    >
+      <view class="arrow right"></view>
+    </view>
+  </view>
+
+  <view
+    class="draw {{items.length && !loading && !loadError ? '' : 'disabled'}}"
+    hover-class="{{items.length && !loading && !loadError ? 'pressed' : ''}}"
+    hover-stay-time="80"
+    bindtap="onDraw"
+  >抽一个</view>
+
+  <bottom-sheet
+    show="{{sheet === 'collection-actions'}}"
+    title="{{sheetTitle}}"
+    show-confirm="{{false}}"
+    bind:guard="onSheetGuard"
+    bind:close="closeSheet"
+  >
+    <view class="sheet-option" hover-class="pressed" hover-stay-time="80" bindtap="onPickRename">重命名</view>
+    <view wx:if="{{!renamingSystem}}" class="sheet-option danger" hover-class="pressed" hover-stay-time="80" bindtap="onPickDeleteCollection">删除</view>
+  </bottom-sheet>
+
+  <bottom-sheet
+    show="{{sheet === 'delete-collection'}}"
+    title="删除清单"
+    confirm-text="删除"
+    busy="{{submitting}}"
+    bind:guard="onSheetGuard"
+    bind:close="closeSheet"
+    bind:confirm="confirmDeleteCollection"
+  >
+    <view class="delete-copy">其中的记录和图片都会去掉</view>
+  </bottom-sheet>
+
+  <bottom-sheet
+    show="{{sheet === 'create' || sheet === 'rename'}}"
+    title="{{sheetTitle}}"
+    confirm-text="{{sheetConfirm}}"
+    busy="{{submitting}}"
+    bind:guard="onSheetGuard"
+    bind:close="closeSheet"
+    bind:confirm="submitCollection"
+  >
+    <input
+      class="field"
+      maxlength="20"
+      placeholder="清单名称"
+      placeholder-class="field-placeholder"
+      value="{{sheetName}}"
+      focus="{{sheet === 'create' || sheet === 'rename'}}"
+      adjust-position="{{true}}"
+      cursor-spacing="80"
+      always-embed="{{true}}"
+      bindinput="onSheetName"
+      confirm-type="done"
+      bindconfirm="submitCollection"
+    />
+  </bottom-sheet>
+
+  <bottom-sheet
+    show="{{sheet === 'add' || sheet === 'edit'}}"
+    title="{{sheetTitle}}"
+    confirm-text="{{sheetConfirm}}"
+    busy="{{submitting}}"
+    bind:guard="onSheetGuard"
+    bind:close="closeSheet"
+    bind:confirm="submitItem"
+  >
+    <input
+      class="field"
+      maxlength="40"
+      placeholder="名称"
+      placeholder-class="field-placeholder"
+      value="{{sheetName}}"
+      adjust-position="{{true}}"
+      cursor-spacing="80"
+      always-embed="{{true}}"
+      bindinput="onSheetName"
+      confirm-type="done"
+    />
+    <view class="image-field">
+      <view wx:if="{{sheetPreview}}" class="image-preview-wrap">
+        <image class="image-preview" src="{{sheetPreview}}" mode="aspectFill" />
+        <view class="image-remove" catchtap="onRemoveSheetImage">移除</view>
+      </view>
+      <view wx:else class="image-add" bindtap="onChooseSheetImage">
+        <view class="plus dark"></view>
+        <text>添加图片(选填)</text>
+      </view>
+    </view>
+  </bottom-sheet>
+
+  <draw-overlay
+    visible="{{drawVisible || detailVisible}}"
+    mode="{{detailVisible ? 'detail' : 'draw'}}"
+    item="{{detailItem}}"
+    pool="{{drawPool}}"
+    bind:close="onOverlayClose"
+    bind:edit="onDetailEdit"
+    bind:delete="onDetailDelete"
+  />
+
+  <root-portal>
+    <view wx:if="{{loading}}" class="boot-mask" catchtap="noop" catchtouchmove="noop">
+      <text class="boot-text">加载中...</text>
+    </view>
+  </root-portal>
+</view>

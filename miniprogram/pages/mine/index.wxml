@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="header" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav" style="height: {{navBarHeight}}px;">
+      <text class="nav-title">我的</text>
+    </view>
+  </view>
+
+  <view class="profile">
+    <view class="avatar-wrap">
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill" />
+        <view wx:else class="avatar avatar-fallback">微信</view>
+      </button>
+    </view>
+    <view class="profile-main">
+      <input
+        class="nickname"
+        type="nickname"
+        placeholder="微信用户"
+        placeholder-class="nickname-placeholder"
+        value="{{nickName}}"
+        bindinput="onNicknameInput"
+        bindblur="onNicknameBlur"
+        maxlength="32"
+      />
+    </view>
+  </view>
+
+
+
+  <view class="slogan">把今天的记录，留给未来的自己...</view>
+</view>

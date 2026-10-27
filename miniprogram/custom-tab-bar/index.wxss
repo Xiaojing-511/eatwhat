@@ -1,0 +1,27 @@
+.wrap {
+  position: fixed;
+  left: 48rpx;
+  right: 48rpx;
+  bottom: calc(env(safe-area-inset-bottom) + 16rpx);
+  z-index: 30;
+  height: 112rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 10rpx 40rpx rgba(0, 0, 0, 0.08);
+  display: flex;
+  overflow: hidden;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 54rpx;
+  height: 54rpx;
+}

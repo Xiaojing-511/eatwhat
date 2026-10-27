@@ -1,0 +1,40 @@
+<root-portal>
+  <view wx:if="{{visible}}" class="mask" bindtap="onMask" catchtouchmove="noop">
+    <view class="stage" catchtap="noop">
+      <view class="visual">
+        <view wx:if="{{phase !== 'result'}}" class="rolling {{phase === 'fading' ? 'fading' : ''}}">{{rollingName}}</view>
+        <view wx:else class="result-card in {{result.imageUrl ? 'has-image' : ''}}">
+          <image
+            wx:if="{{result.imageUrl}}"
+            class="result-image"
+            src="{{result.imageUrl}}"
+            mode="aspectFill"
+          />
+          <view wx:else class="result-name-wrap">
+            <text class="result-name">{{result.name}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="meta">
+        <text wx:if="{{phase === 'result' && result && result.imageUrl}}" class="meta-name">{{result.name}}</text>
+        <text wx:if="{{phase === 'result'}}" class="meta-time">{{resultTime}}</text>
+      </view>
+      <view
+        wx:if="{{mode !== 'detail'}}"
+        class="again {{busy ? 'busy' : ''}}"
+        hover-class="{{busy ? '' : 'pressed'}}"
+        hover-stay-time="80"
+        bindtap="onAgain"
+      >{{againText}}</view>
+      <view wx:else class="actions">
+        <view class="action-hit" hover-class="pressed" hover-stay-time="80" bindtap="onEdit">
+          <view class="icon-edit"></view>
+        </view>
+        <view class="action-hit" hover-class="pressed" hover-stay-time="80" bindtap="onDelete">
+          <view class="icon-trash"></view>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{!busy}}" class="hint">轻触空白处关闭</view>
+  </view>
+</root-portal>

@@ -1,0 +1,139 @@
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: #ffffff;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 200rpx);
+}
+
+.header {
+  background: #ffffff;
+}
+
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #111111;
+  letter-spacing: -0.2px;
+}
+
+.profile {
+  margin: 12rpx 40rpx 0;
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: #f2f2f7;
+  display: flex;
+  align-items: center;
+}
+
+.avatar-wrap {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e5e5ea;
+}
+
+.avatar-btn {
+  position: relative;
+  width: 128rpx !important;
+  height: 128rpx !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e5e5ea;
+  line-height: 1 !important;
+  font-size: 0;
+  box-sizing: border-box;
+  display: block;
+}
+
+.avatar-btn::after {
+  display: none;
+  border: none;
+}
+
+.avatar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: block;
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e5ea;
+  color: #8e8e93;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.profile-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 28rpx;
+}
+
+.nickname {
+  height: 64rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #111111;
+}
+
+.nickname-placeholder {
+  color: #8e8e93;
+  font-weight: 600;
+}
+
+
+
+.row {
+  width: 100%;
+  min-height: 104rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #111111;
+  font-size: 32rpx;
+  background: transparent;
+}
+
+.row-chevron {
+  width: 14rpx;
+  height: 14rpx;
+  border-top: 4rpx solid #c7c7cc;
+  border-right: 4rpx solid #c7c7cc;
+  transform: rotate(45deg);
+}
+
+.slogan {
+  position: fixed;
+  left: 48rpx;
+  right: 48rpx;
+  bottom: calc(env(safe-area-inset-bottom) + 168rpx);
+  z-index: 2;
+  text-align: center;
+  color: #8e8e93;
+  font-size: 24rpx;
+  line-height: 1.4;
+}

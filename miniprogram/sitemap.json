@@ -1,0 +1,9 @@
+{
+  "desc": "吃什么",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

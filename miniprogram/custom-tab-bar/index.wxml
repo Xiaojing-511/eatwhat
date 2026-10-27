@@ -1,0 +1,11 @@
+<view wx:if="{{!hidden}}" class="wrap">
+  <view
+    wx:for="{{tabs}}"
+    wx:key="pagePath"
+    class="tab"
+    data-index="{{index}}"
+    bindtap="onSwitch"
+  >
+    <image class="icon" src="{{selected === index ? item.activeIcon : item.icon}}" mode="aspectFit" />
+  </view>
+</view>

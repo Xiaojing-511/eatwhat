@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "bottom-sheet": "/components/bottom-sheet/index",
+    "draw-overlay": "/components/draw-overlay/index"
+  }
+}

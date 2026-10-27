@@ -1,0 +1,53 @@
+.mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx 48rpx calc(env(safe-area-inset-bottom) + 48rpx);
+  box-sizing: border-box;
+}
+
+.panel {
+  width: 622rpx;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 40rpx 40rpx 36rpx;
+}
+
+.title {
+  margin-bottom: 32rpx;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #111111;
+}
+
+.confirm {
+  margin-top: 36rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
+  background: #111111;
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm.pressed {
+  transform: scale(0.98);
+  background: #3a3a3c;
+}
+
+.confirm.busy {
+  opacity: 0.55;
+}
