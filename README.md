@@ -2,6 +2,16 @@
 
 微信小程序。把想吃的记成一张张卡片，纠结的时候从当前清单里抽一个。
 
+<p align="center">
+  <img src="assets/eatwhat-home.png" width="210" alt="吃什么首页" />
+  &nbsp;&nbsp;
+  <img src="assets/eatwhat-draw.png" width="210" alt="吃什么抽取结果" />
+  &nbsp;&nbsp;
+  <img src="assets/eatwhat-miniprogram-code.jpg" width="190" alt="吃什么微信小程序码" />
+  <br />
+  <sub>首页 · 抽取结果 · 微信扫码体验「吃什么」</sub>
+</p>
+
 ## 功能
 
 - 清单：切换、新建、重命名、删除。新用户会复制「做饭吃」「外卖」「午餐」三份示例
