@@ -4,15 +4,17 @@
       <text class="nav-title">吃什么</text>
     </view>
     <view class="toolbar">
-      <view class="collection-trigger" bindtap="toggleMenu">
-        <text class="collection-name">{{currentName || '未选择'}}</text>
-        <view class="chevron {{menuOpen ? 'up' : ''}}"></view>
-      </view>
-      <view class="icon-hit" hover-class="is-pressed" hover-stay-time="80" bindtap="openCreate">
-        <view class="plus"></view>
+      <view class="directory guide-directory">
+        <view class="collection-trigger" bindtap="toggleMenu">
+          <text class="collection-name">{{currentName || '未选择'}}</text>
+          <view class="chevron {{menuOpen ? 'up' : ''}}"></view>
+        </view>
+        <view class="icon-hit" hover-class="is-pressed" hover-stay-time="80" bindtap="openCreate">
+          <view class="plus"></view>
+        </view>
       </view>
       <view class="toolbar-space"></view>
-      <view class="icon-hit" hover-class="is-pressed" hover-stay-time="80" bindtap="openAdd">
+      <view class="icon-hit guide-add" hover-class="is-pressed" hover-stay-time="80" bindtap="openAdd">
         <view class="icon-pen"></view>
       </view>
     </view>
@@ -197,6 +199,25 @@
   <root-portal>
     <view wx:if="{{loading}}" class="boot-mask" catchtap="noop" catchtouchmove="noop">
       <text class="boot-text">加载中...</text>
+    </view>
+    <view
+      wx:if="{{showGuide}}"
+      class="guide {{guideReady ? 'is-ready' : ''}} {{guideCenter ? 'is-center' : ''}}"
+      catchtap="onGuideNext"
+      catchtouchmove="noop"
+    >
+      <view wx:if="{{guideReady && !guideCenter}}" class="guide-hole" style="{{guideHoleStyle}}"></view>
+      <view wx:if="{{guideReady && !guideCenter}}" class="guide-tip" style="{{guideTipStyle}}">
+        <text wx:for="{{guideLines}}" wx:key="*this" class="guide-line">{{item}}</text>
+      </view>
+      <view wx:if="{{guideReady && guideCenter}}" class="guide-center">
+        <text wx:for="{{guideLines}}" wx:key="*this" class="guide-center-line">{{item}}</text>
+      </view>
+      <view
+        class="guide-skip"
+        style="top: {{statusBarHeight}}px; height: {{navBarHeight}}px; line-height: {{navBarHeight}}px;"
+        catchtap="onGuideSkip"
+      >跳过</view>
     </view>
   </root-portal>
 </view>

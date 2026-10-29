@@ -202,6 +202,7 @@ async function saveUser(patch) {
     if (patch.nickName != null) data.nickName = patch.nickName;
     if (patch.avatarFileId != null) data.avatarFileId = patch.avatarFileId;
     if (patch.seeded != null) data.seeded = !!patch.seeded;
+    if (patch.guideDone != null) data.guideDone = !!patch.guideDone;
     await (await collection(USERS)).doc(existing._id).update({ data });
     return Object.assign({}, existing, data);
   }
@@ -209,6 +210,7 @@ async function saveUser(patch) {
     nickName: patch.nickName || "",
     avatarFileId: patch.avatarFileId || "",
     seeded: !!patch.seeded,
+    guideDone: !!patch.guideDone,
     updatedAt: now,
   };
   const res = await (await collection(USERS)).add({ data });

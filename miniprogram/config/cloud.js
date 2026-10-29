@@ -7,6 +7,7 @@
 // 示例图片放在 eatwhat/samples/，该目录需所有用户可读。用户自己上传的图仍在 eatwhat/。
 // 清单名和存储目录都带 eatwhat 前缀，避免碰到 users / players / cards / travel-cards / audio。
 // 清单 eatwhat_collections、eatwhat_items、eatwhat_users 权限为「仅创建者可读写」。
+// 新用户引导完成后，eatwhat_users.guideDone 为 true，本地同时记下 eatwhat_guide_done。
 // 若按创建时间排序失败，按控制台提示为 createdAt、collectionId+createdAt 建索引。
 // 云函数按 is_system 查示例清单，数据变多后按控制台提示为 is_system 建索引。
 module.exports = {
@@ -21,5 +22,6 @@ module.exports = {
   samplePrefix: "eatwhat/samples/",
   avatarPrefix: "eatwhat/avatars/",
   currentCollectionKey: "eatwhat_current_collection_id",
+  guideDoneKey: "eatwhat_guide_done",
   seedFunction: "eatwhatSeed",
 };

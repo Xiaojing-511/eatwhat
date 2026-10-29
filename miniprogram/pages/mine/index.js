@@ -1,6 +1,11 @@
 const cloudConfig = require("../../config/cloud.js");
 const { getUser, saveUser } = require("../../utils/db.js");
-const { compressImage, uploadImage, deleteCloudFiles, tempUrlMap } = require("../../utils/image.js");
+const {
+  compressImage,
+  uploadImage,
+  deleteCloudFiles,
+  tempUrlMap,
+} = require("../../utils/image.js");
 
 function toast(title) {
   wx.showToast({ title, icon: "none" });
@@ -16,18 +21,39 @@ Page({
   },
 
   onLoad() {
+    try {
+      wx.showShareMenu({
+        menus: ["shareAppMessage", "shareTimeline"],
+      });
+    } catch (err) {}
     const win = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
     const statusBarHeight = win.statusBarHeight || 20;
     let navBarHeight = 44;
     try {
       const menu = wx.getMenuButtonBoundingClientRect();
       if (menu && menu.height) {
-        navBarHeight = Math.max(44, (menu.top - statusBarHeight) * 2 + menu.height);
+        navBarHeight = Math.max(
+          44,
+          (menu.top - statusBarHeight) * 2 + menu.height,
+        );
       }
     } catch (err) {
       navBarHeight = 44;
     }
     this.setData({ statusBarHeight, navBarHeight });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: "吃什么？把今天的记录，留给未来纠结的自己",
+      path: "/pages/home/index",
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: "吃什么？把今天的记录，留给未来纠结的自己",
+    };
   },
 
   onShow() {
@@ -47,7 +73,11 @@ Page({
       const urls = await tempUrlMap([avatarFileId]);
       if (this._token !== token) return;
       this._savedNick = nickName;
-      this.setData({ nickName, avatarFileId, avatarUrl: urls[avatarFileId] || "" });
+      this.setData({
+        nickName,
+        avatarFileId,
+        avatarUrl: urls[avatarFileId] || "",
+      });
     } catch (err) {
       console.error(err);
       if (this._token === token) toast("资料加载失败");

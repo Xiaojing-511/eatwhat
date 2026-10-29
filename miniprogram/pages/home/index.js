@@ -1,8 +1,21 @@
 const cloudConfig = require("../../config/cloud.js");
-const { PAGE_SIZE, chunkPages, validateCollectionName, validateItemName } = require("../../utils/format.js");
-const { chooseImage, compressImage, uploadImage, deleteCloudFiles, withImageUrls } = require("../../utils/image.js");
+const {
+  PAGE_SIZE,
+  chunkPages,
+  validateCollectionName,
+  validateItemName,
+} = require("../../utils/format.js");
+const {
+  chooseImage,
+  compressImage,
+  uploadImage,
+  deleteCloudFiles,
+  withImageUrls,
+} = require("../../utils/image.js");
 const {
   ensureDefaultCollections,
+  getUser,
+  saveUser,
   createCollection,
   renameCollection,
   listItems,
@@ -26,8 +39,8 @@ function askModal(options) {
           success: resolve,
           fail: () => resolve({ confirm: false }),
         },
-        options
-      )
+        options,
+      ),
     );
   });
 }
@@ -40,6 +53,32 @@ function askSheet(itemList) {
       fail: () => resolve(-1),
     });
   });
+}
+
+const GUIDE_STEPS = [
+  {
+    selector: ".guide-directory",
+    lines: ["这是目录区，点击右侧的“+”即可添加新目录～"],
+  },
+  {
+    selector: ".guide-add",
+    lines: ["点击这里新建目录中的内容哦～"],
+  },
+  {
+    center: true,
+    lines: [
+      "随手记下你爱吃的，纠结时自有答案～",
+      "现在就创建一个属于你的美食清单吧！",
+    ],
+  },
+];
+
+function readGuideDone() {
+  try {
+    return !!wx.getStorageSync(cloudConfig.guideDoneKey);
+  } catch (err) {
+    return false;
+  }
 }
 
 function toPages(items) {
@@ -82,9 +121,20 @@ Page({
     drawPool: [],
     detailVisible: false,
     detailItem: null,
+    showGuide: false,
+    guideReady: false,
+    guideCenter: false,
+    guideLines: [],
+    guideHoleStyle: "",
+    guideTipStyle: "",
   },
 
   onLoad() {
+    try {
+      wx.showShareMenu({
+        menus: ["shareAppMessage", "shareTimeline"],
+      });
+    } catch (err) {}
     const win = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
     const statusBarHeight = win.statusBarHeight || 20;
     const windowWidth = win.windowWidth || 375;
@@ -92,7 +142,10 @@ Page({
     try {
       const menu = wx.getMenuButtonBoundingClientRect();
       if (menu && menu.height) {
-        navBarHeight = Math.max(44, (menu.top - statusBarHeight) * 2 + menu.height);
+        navBarHeight = Math.max(
+          44,
+          (menu.top - statusBarHeight) * 2 + menu.height,
+        );
       }
     } catch (err) {
       navBarHeight = 44;
@@ -100,11 +153,13 @@ Page({
     const toolbarHeight = Math.round((96 * windowWidth) / 750);
     const taglineHeight = Math.round((26 * windowWidth) / 750);
     this._windowWidth = windowWidth;
+    this._windowHeight = win.windowHeight || 667;
     this.setData({
       statusBarHeight,
       navBarHeight,
       toolbarHeight,
-      headerOffset: statusBarHeight + navBarHeight + toolbarHeight + taglineHeight,
+      headerOffset:
+        statusBarHeight + navBarHeight + toolbarHeight + taglineHeight,
     });
   },
 
@@ -113,18 +168,52 @@ Page({
     this.loadAll();
   },
 
+  onShareAppMessage() {
+    return {
+      title: "吃什么？把今天的记录，留给未来纠结的自己",
+      path: "/pages/home/index",
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: "吃什么？把今天的记录，留给未来纠结的自己",
+    };
+  },
+
   syncTab(extra) {
     const tab = typeof this.getTabBar === "function" ? this.getTabBar() : null;
     if (!tab) return;
-    const menuOpen = extra && extra.menuOpen !== undefined ? extra.menuOpen : this.data.menuOpen;
-    const sheet = extra && extra.sheet !== undefined ? extra.sheet : this.data.sheet;
-    const drawVisible = extra && extra.drawVisible !== undefined ? extra.drawVisible : this.data.drawVisible;
+    const menuOpen =
+      extra && extra.menuOpen !== undefined
+        ? extra.menuOpen
+        : this.data.menuOpen;
+    const sheet =
+      extra && extra.sheet !== undefined ? extra.sheet : this.data.sheet;
+    const drawVisible =
+      extra && extra.drawVisible !== undefined
+        ? extra.drawVisible
+        : this.data.drawVisible;
     const detailVisible =
-      extra && extra.detailVisible !== undefined ? extra.detailVisible : this.data.detailVisible;
-    const loading = extra && extra.loading !== undefined ? extra.loading : this.data.loading;
+      extra && extra.detailVisible !== undefined
+        ? extra.detailVisible
+        : this.data.detailVisible;
+    const loading =
+      extra && extra.loading !== undefined ? extra.loading : this.data.loading;
+    const showGuide =
+      extra && extra.showGuide !== undefined
+        ? extra.showGuide
+        : this.data.showGuide;
     tab.setData({
       selected: 0,
-      hidden: !!(loading || menuOpen || sheet || drawVisible || detailVisible),
+      hidden: !!(
+        loading ||
+        menuOpen ||
+        sheet ||
+        drawVisible ||
+        detailVisible ||
+        showGuide
+      ),
     });
   },
 
@@ -142,11 +231,21 @@ Page({
     try {
       const collections = await ensureDefaultCollections();
       if (this._loadToken !== token) return;
+      let user = null;
+      if (!this._guideChecked && !readGuideDone()) {
+        user = await getUser();
+        if (this._loadToken !== token) return;
+      }
+      this._loadedUser = user;
       const saved = wx.getStorageSync(cloudConfig.currentCollectionKey) || "";
-      const current = collections.find((item) => item._id === saved) || collections[0] || null;
+      const current =
+        collections.find((item) => item._id === saved) ||
+        collections[0] ||
+        null;
       const currentId = current ? current._id : "";
       const changed = currentId !== this.data.currentId;
-      if (current) wx.setStorageSync(cloudConfig.currentCollectionKey, current._id);
+      if (current)
+        wx.setStorageSync(cloudConfig.currentCollectionKey, current._id);
       else wx.removeStorageSync(cloudConfig.currentCollectionKey);
       this.setData({
         loadError: false,
@@ -158,20 +257,22 @@ Page({
         itemsLoading: !!currentId,
       });
       if (!currentId) {
-        this.setData({ items: [], pages: [], pageIndex: 0, itemsLoading: false, loading: false });
-        this.syncTab();
+        this.reveal({
+          items: [],
+          pages: [],
+          pageIndex: 0,
+          itemsLoading: false,
+        });
         return;
       }
       try {
         await this.refreshItems();
         if (this._loadToken !== token) return;
-        this.setData({ loading: false });
-        this.syncTab();
+        this.reveal();
       } catch (err) {
         console.error(err);
         if (this._loadToken === token) {
-          this.setData({ itemsLoading: false, loading: false });
-          this.syncTab();
+          this.reveal({ itemsLoading: false });
           toast("内容加载失败");
         }
       }
@@ -181,7 +282,203 @@ Page({
       this.setData({ loading: false, loadError: true, itemsLoading: false });
       this.syncTab();
       const message = (err && err.message) || "";
-      toast(message && message.indexOf("cloud") < 0 && message.length <= 20 ? message : "加载失败");
+      toast(
+        message && message.indexOf("cloud") < 0 && message.length <= 20
+          ? message
+          : "加载失败",
+      );
+    }
+  },
+
+  reveal(patch) {
+    const data = Object.assign(
+      { loading: false },
+      patch || {},
+      this.guidePatch(),
+    );
+    this.setData(data, () => {
+      this.syncTab();
+      if (data.showGuide) this.measureGuide();
+    });
+  },
+
+  guidePatch() {
+    if (this._guideChecked) return {};
+    this._guideChecked = true;
+    if (this.guideAlreadyDone(this._loadedUser)) return {};
+    this._guideStep = 0;
+    return {
+      showGuide: true,
+      guideReady: false,
+      guideCenter: false,
+      guideLines: GUIDE_STEPS[0].lines,
+      guideHoleStyle: "",
+      guideTipStyle: "",
+    };
+  },
+
+  guideAlreadyDone(user) {
+    if (readGuideDone()) return true;
+    if (user && user.guideDone) {
+      try {
+        wx.setStorageSync(cloudConfig.guideDoneKey, 1);
+      } catch (err) {}
+      return true;
+    }
+    return false;
+  },
+
+  measureGuide(attempt) {
+    if (!this.data.showGuide) return;
+    const step = GUIDE_STEPS[this._guideStep || 0];
+    if (!step || step.center) {
+      this.setData({
+        guideReady: true,
+        guideCenter: true,
+        guideHoleStyle: "",
+        guideLines: (step && step.lines) || [],
+      });
+      return;
+    }
+    const token = (this._guideMeasureToken || 0) + 1;
+    this._guideMeasureToken = token;
+    const run = () => {
+      if (!this.data.showGuide || token !== this._guideMeasureToken) return;
+      const query = wx.createSelectorQuery().in(this);
+      query.selectAll(step.selector).boundingClientRect();
+      query.exec((res) => {
+        if (!this.data.showGuide || token !== this._guideMeasureToken) return;
+        const rect = this.pickGuideRect(res && res[0]);
+        if (!rect) {
+          if ((attempt || 0) < 12) {
+            setTimeout(() => {
+              if (token === this._guideMeasureToken)
+                this.measureGuide((attempt || 0) + 1);
+            }, 80);
+            return;
+          }
+          this.placeGuide(this.fallbackGuideRect());
+          return;
+        }
+        this.placeGuide(rect);
+      });
+    };
+    if (typeof wx.nextTick === "function") wx.nextTick(run);
+    else run();
+  },
+
+  pickGuideRect(list) {
+    const rects = Array.isArray(list) ? list : list ? [list] : [];
+    for (let i = 0; i < rects.length; i += 1) {
+      const rect = rects[i];
+      if (rect && rect.width > 0 && rect.height > 0) return rect;
+    }
+    return null;
+  },
+
+  fallbackGuideRect() {
+    const winW = this._windowWidth || 375;
+    const rpx = winW / 750;
+    const top =
+      (this.data.statusBarHeight || 20) +
+      (this.data.navBarHeight || 44) +
+      12 * rpx;
+    const step = GUIDE_STEPS[this._guideStep || 0];
+    if (step && step.selector === ".guide-add") {
+      const size = 64 * rpx;
+      return {
+        left: winW - 32 * rpx - size,
+        top: top,
+        width: size,
+        height: size,
+      };
+    }
+    const height = 72 * rpx;
+    return {
+      left: 32 * rpx,
+      top: top,
+      width: Math.min(winW * 0.62, 280),
+      height: height,
+    };
+  },
+
+  placeGuide(rect) {
+    const pad = 8;
+    const winW = this._windowWidth || 375;
+    const winH = this._windowHeight || 667;
+    let left = rect.left - pad;
+    let top = rect.top - pad;
+    let width = rect.width + pad * 2;
+    let height = rect.height + pad * 2;
+    if (left < 8) {
+      width -= 8 - left;
+      left = 8;
+    }
+    if (top < 8) {
+      height -= 8 - top;
+      top = 8;
+    }
+    if (left + width > winW - 8) width = Math.max(8, winW - 8 - left);
+    if (top + height > winH - 8) height = Math.max(8, winH - 8 - top);
+    const hole =
+      "left:" +
+      left +
+      "px;top:" +
+      top +
+      "px;width:" +
+      width +
+      "px;height:" +
+      height +
+      "px;";
+    const tipWidth = Math.max(160, winW - 48);
+    const tipTop = Math.min(top + height + 16, winH - 120);
+    this.setData({
+      guideHoleStyle: hole,
+      guideTipStyle: "left:24px;width:" + tipWidth + "px;top:" + tipTop + "px;",
+      guideReady: true,
+      guideCenter: false,
+      guideLines: (GUIDE_STEPS[this._guideStep || 0] || GUIDE_STEPS[0]).lines,
+    });
+  },
+
+  onGuideNext() {
+    if (!this.data.showGuide || this._guideFinishing || !this.data.guideReady)
+      return;
+    sound.playClick();
+    const next = (this._guideStep || 0) + 1;
+    if (next >= GUIDE_STEPS.length) {
+      this.finishGuide();
+      return;
+    }
+    this._guideStep = next;
+    const step = GUIDE_STEPS[next];
+    this.setData({
+      guideLines: step.lines,
+      guideCenter: !!step.center,
+    });
+    this.measureGuide();
+  },
+
+  onGuideSkip() {
+    if (!this.data.showGuide || this._guideFinishing) return;
+    sound.playClick();
+    this.finishGuide();
+  },
+
+  async finishGuide() {
+    if (this._guideFinishing) return;
+    this._guideFinishing = true;
+    try {
+      wx.setStorageSync(cloudConfig.guideDoneKey, 1);
+    } catch (err) {}
+    this.setData({ showGuide: false, guideReady: false, guideCenter: false });
+    this.syncTab({ showGuide: false });
+    try {
+      await saveUser({ guideDone: true });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      this._guideFinishing = false;
     }
   },
 
@@ -193,7 +490,8 @@ Page({
       return;
     }
     const items = await withImageUrls(await listItems(collectionId));
-    if (token !== this._loadToken || this.data.currentId !== collectionId) return;
+    if (token !== this._loadToken || this.data.currentId !== collectionId)
+      return;
     const pages = toPages(items);
     let pageIndex = this.data.pageIndex || 0;
     if (pageIndex > pages.length - 1) pageIndex = Math.max(0, pages.length - 1);
@@ -203,7 +501,7 @@ Page({
   noop() {},
 
   toggleMenu() {
-    if (this.data.loading) return;
+    if (this.data.loading || this.data.showGuide) return;
     const menuOpen = !this.data.menuOpen;
     this.setData({
       menuOpen,
@@ -281,7 +579,7 @@ Page({
   },
 
   openCreate() {
-    if (this.data.loading || this._submitting) return;
+    if (this.data.loading || this._submitting || this.data.showGuide) return;
     this.setData({
       menuOpen: false,
       sheet: "create",
@@ -308,7 +606,7 @@ Page({
   },
 
   openAdd() {
-    if (this.data.loading || this._submitting) return;
+    if (this.data.loading || this._submitting || this.data.showGuide) return;
     if (!this.data.currentId) {
       toast("先创建一个清单");
       return;
@@ -349,7 +647,13 @@ Page({
 
   ignorePenetratedTap() {
     if (this._ignoreTapUntil && Date.now() < this._ignoreTapUntil) return true;
-    return !!(this.data.sheet || this.data.menuOpen || this.data.drawVisible || this.data.detailVisible);
+    return !!(
+      this.data.sheet ||
+      this.data.menuOpen ||
+      this.data.drawVisible ||
+      this.data.detailVisible ||
+      this.data.showGuide
+    );
   },
 
   closeSheet() {
@@ -406,7 +710,7 @@ Page({
     const check = validateCollectionName(
       this.data.sheetName,
       names,
-      renaming ? this.data.renamingName : undefined
+      renaming ? this.data.renamingName : undefined,
     );
     if (!check.ok) {
       toast(check.message);
@@ -419,7 +723,9 @@ Page({
       if (renaming) {
         await renameCollection(this.data.renamingId, check.name);
         const currentName =
-          this.data.currentId === this.data.renamingId ? check.name : this.data.currentName;
+          this.data.currentId === this.data.renamingId
+            ? check.name
+            : this.data.currentName;
         this.setData({
           sheet: "",
           sheetName: "",
@@ -453,7 +759,8 @@ Page({
 
   async submitItem() {
     if (this._submitting) return;
-    if (this._ignoreItemSubmitUntil && Date.now() < this._ignoreItemSubmitUntil) return;
+    if (this._ignoreItemSubmitUntil && Date.now() < this._ignoreItemSubmitUntil)
+      return;
     const editing = this.data.sheet === "edit" ? this.data.editingItem : null;
     const check = validateItemName(this.data.sheetName);
     if (!check.ok) {
@@ -472,20 +779,31 @@ Page({
       let imageFileId = editing ? editing.imageFileId || "" : "";
       let sharedImage = editing ? !!editing.sharedImage : false;
       const previous = imageFileId;
-      const previousShared = !!(editing && (editing.sharedImage || editing.is_system));
+      const previousShared = !!(
+        editing &&
+        (editing.sharedImage || editing.is_system)
+      );
       if (this.data.sheetImageRemoved) {
         imageFileId = "";
         sharedImage = false;
       } else if (this.data.sheetLocalImage) {
         const compressed = await compressImage(this.data.sheetLocalImage);
-        const folder = editing && editing.is_system ? cloudConfig.samplePrefix : cloudConfig.storagePrefix;
+        const folder =
+          editing && editing.is_system
+            ? cloudConfig.samplePrefix
+            : cloudConfig.storagePrefix;
         uploaded = await uploadImage(compressed, folder);
         imageFileId = uploaded;
         sharedImage = false;
       }
       if (editing) {
-        await updateItem(editing._id, { name: check.name, imageFileId, sharedImage });
-        if (previous && previous !== imageFileId && !previousShared) await deleteCloudFiles([previous]);
+        await updateItem(editing._id, {
+          name: check.name,
+          imageFileId,
+          sharedImage,
+        });
+        if (previous && previous !== imageFileId && !previousShared)
+          await deleteCloudFiles([previous]);
         uploaded = "";
         this.setData({
           sheet: "",
@@ -601,7 +919,12 @@ Page({
       toast("删除失败");
     } finally {
       this._submitting = false;
-      this.setData({ submitting: false, renamingId: "", renamingName: "", renamingSystem: false });
+      this.setData({
+        submitting: false,
+        renamingId: "",
+        renamingName: "",
+        renamingSystem: false,
+      });
       wx.hideLoading();
       this.syncTab();
     }
@@ -624,7 +947,13 @@ Page({
   },
 
   onDraw() {
-    if (this.data.loading || this.data.loadError || !this.data.items.length) return;
+    if (
+      this.data.loading ||
+      this.data.showGuide ||
+      this.data.loadError ||
+      !this.data.items.length
+    )
+      return;
     this.setData({
       menuOpen: false,
       detailVisible: false,

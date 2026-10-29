@@ -35,6 +35,13 @@
 }
 
 
+.directory {
+  display: flex;
+  align-items: center;
+  max-width: calc(100% - 88rpx);
+  min-width: 0;
+}
+
 .toolbar-space {
   flex: 1;
   min-width: 16rpx;
@@ -53,7 +60,8 @@
 .collection-trigger {
   display: flex;
   align-items: center;
-  max-width: calc(100% - 160rpx);
+  flex: 0 1 auto;
+  max-width: 100%;
   min-width: 0;
   height: 72rpx;
 }
@@ -494,4 +502,81 @@
   background: rgba(0, 0, 0, 0.55);
   color: #ffffff;
   font-size: 22rpx;
+}
+
+.guide {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.guide.is-ready {
+  background: transparent;
+}
+
+.guide.is-ready.is-center {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.guide-hole {
+  position: absolute;
+  z-index: 1;
+  border-radius: 24rpx;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+}
+
+.guide-tip {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  padding: 28rpx 32rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 16rpx 60rpx rgba(0, 0, 0, 0.16);
+  color: #111111;
+  font-size: 28rpx;
+  line-height: 1.55;
+}
+
+.guide-line {
+  display: block;
+}
+
+.guide-center {
+  position: absolute;
+  left: 64rpx;
+  right: 64rpx;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  padding: 65rpx 40rpx;
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 16rpx 60rpx rgba(0, 0, 0, 0.16);
+  text-align: center;
+}
+
+.guide-center-line {
+  display: block;
+  color: #111111;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 2.2;
+}
+
+.guide-center-line + .guide-center-line {
+  margin-top: 24rpx;
+}
+
+.guide-skip {
+  position: absolute;
+  left: 40rpx;
+  z-index: 3;
+  color: #ffffff;
+  font-size: 28rpx;
+  letter-spacing: 2rpx;
 }
